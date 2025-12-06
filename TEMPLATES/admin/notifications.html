@@ -1,0 +1,64 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h2>
+        <p class="text-gray-500 dark:text-gray-400">Stay updated with issue changes</p>
+    </div>
+    <form action="{% url 'admin_mark_all_read' %}" method="POST" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+            <i class="fas fa-check-double mr-2"></i>Mark All Read
+        </button>
+    </form>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for notification in notifications %}
+        <div class="p-6 {% if not notification.is_read %}bg-green-50 dark:bg-green-900/10{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ notification.title }}</h3>
+                        {% if not notification.is_read %}
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ notification.message }}</p>
+                    <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span><i class="fas fa-clock mr-1"></i>{{ notification.created_at|date:"M d, Y H:i" }}</span>
+                        {% if notification.issue %}
+                        <a href="{% url 'admin_issue_detail' notification.issue.id %}" class="text-green-600 dark:text-green-400 hover:underline">
+                            <i class="fas fa-external-link-alt mr-1"></i>View Issue
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not notification.is_read %}
+                <form action="{% url 'admin_notifications' %}" method="POST" class="ml-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="notification_id" value="{{ notification.id }}">
+                    <button type="submit" class="text-green-600 dark:text-green-400 hover:underline text-sm">
+                        <i class="fas fa-check"></i> Mark Read
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center">
+            <i class="fas fa-bell-slash text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-500 dark:text-gray-400">No notifications</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+

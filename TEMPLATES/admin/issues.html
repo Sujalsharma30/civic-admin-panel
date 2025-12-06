@@ -1,0 +1,160 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Issues Management{% endblock %}
+{% block page_title %}Issues Management{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+    <form method="GET" action="{% url 'admin_issues' %}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <input type="text" name="search" value="{{ search }}" placeholder="Search issues..." 
+               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        
+        <select name="status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Status</option>
+            <option value="reported" {% if status_filter == 'reported' %}selected{% endif %}>Reported</option>
+            <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+            <option value="escalated" {% if status_filter == 'escalated' %}selected{% endif %}>Escalated</option>
+        </select>
+        
+        <select name="category" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Categories</option>
+            <option value="pothole" {% if category_filter == 'pothole' %}selected{% endif %}>Pothole</option>
+            <option value="drainage" {% if category_filter == 'drainage' %}selected{% endif %}>Drainage</option>
+            <option value="streetlight" {% if category_filter == 'streetlight' %}selected{% endif %}>Streetlight</option>
+            <option value="waste" {% if category_filter == 'waste' %}selected{% endif %}>Waste Management</option>
+            <option value="electricity" {% if category_filter == 'electricity' %}selected{% endif %}>Electricity</option>
+            <option value="water" {% if category_filter == 'water' %}selected{% endif %}>Water Supply</option>
+            <option value="other" {% if category_filter == 'other' %}selected{% endif %}>Other</option>
+        </select>
+        
+        <select name="priority" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Priorities</option>
+            <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>Low</option>
+            <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Medium</option>
+            <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>High</option>
+            <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>Urgent</option>
+        </select>
+        
+        <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                <i class="fas fa-filter mr-2"></i>Filter
+            </button>
+            <a href="{% url 'admin_issues' %}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Issues Table -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Issues ({{ issues.paginator.count }})</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Priority</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Department</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for issue in issues %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">#{{ issue.id }}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <a href="{% url 'admin_issue_detail' issue.id %}" class="text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400">
+                            {{ issue.title|truncatewords:10 }}
+                        </a>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                            {{ issue.get_category_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        {% if issue.priority == 'urgent' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">Urgent</span>
+                        {% elif issue.priority == 'high' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">High</span>
+                        {% elif issue.priority == 'medium' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">Medium</span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">Low</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        {% if issue.status == 'resolved' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">Resolved</span>
+                        {% elif issue.status == 'in_progress' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">In Progress</span>
+                        {% elif issue.status == 'verified' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">Verified</span>
+                        {% elif issue.status == 'escalated' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">Escalated</span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Reported</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                        {{ issue.department.name|default:"Unassigned" }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ issue.created_at|date:"M d, Y" }}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <a href="{% url 'admin_issue_detail' issue.id %}" class="text-green-600 dark:text-green-400 hover:underline mr-3">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <form action="{% url 'admin_issue_delete' issue.id %}" method="POST" class="inline" onsubmit="return confirm('Delete this issue?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No issues found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if issues.has_other_pages %}
+    <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+            Showing {{ issues.start_index }} to {{ issues.end_index }} of {{ issues.paginator.count }} issues
+        </div>
+        <div class="flex gap-2">
+            {% if issues.has_previous %}
+            <a href="?page={{ issues.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Previous
+            </a>
+            {% endif %}
+            <span class="px-4 py-2 bg-green-600 text-white rounded-lg">{{ issues.number }}</span>
+            {% if issues.has_next %}
+            <a href="?page={{ issues.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Next
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

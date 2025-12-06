@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Issue Registry - CivicHub{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h2>All Issues</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" placeholder="Search..." class="form-input" style="width: 200px; padding: 6px;">
+            <button class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Location</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th style="text-align: right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in issues %}
+                <tr>
+                    <td style="font-weight: 600">#{{ issue.id }}</td>
+                    <td>{{ issue.loc }}</td>
+                    <td>{{ issue.cat }}</td>
+                    <td class="priority-{{ issue.prio }}">{{ issue.prio|title }}</td>
+                    <td>
+                        <span class="badge status-{{ issue.status|slugify|title }}">
+                            {{ issue.status }}
+                        </span>
+                    </td>
+                    <td>{{ issue.date }}</td>
+                    <td style="text-align: right">
+                        <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.75rem">View</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" style="text-align: center; padding: 20px;">No issues found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

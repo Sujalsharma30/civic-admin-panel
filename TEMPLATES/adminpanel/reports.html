@@ -1,0 +1,161 @@
+{% extends 'adminpanel/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Civic Issues" %}{% endblock %}
+{% block page_title %}{% trans "Issue Management" %}{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div>
+            <p class="text-xs text-gray-500 uppercase font-bold">Pending</p>
+            <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ reports.paginator.count }}</p>
+        </div>
+        <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+    </div>
+    <!-- Add more summary cards if calculated in views -->
+</div>
+
+<!-- Filters -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+    <form method="GET" action="{% url 'admin_reports' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Search -->
+        <div class="md:col-span-2 relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i class="fas fa-search text-gray-400"></i>
+            </span>
+            <input type="text" name="search" value="{{ search }}" placeholder="Search issue, location or ID..." 
+                   class="w-full pl-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        
+        <!-- Status Filter -->
+        <select name="status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Status</option>
+            <option value="reported" {% if status_filter == 'reported' %}selected{% endif %}>Reported</option>
+            <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>Resolved</option>
+            <option value="escalated" {% if status_filter == 'escalated' %}selected{% endif %}>Escalated</option>
+        </select>
+        
+        <!-- Category Filter -->
+        <select name="category" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Categories</option>
+            <option value="pothole" {% if category_filter == 'pothole' %}selected{% endif %}>Pothole</option>
+            <option value="garbage" {% if category_filter == 'garbage' %}selected{% endif %}>Garbage</option>
+            <option value="water" {% if category_filter == 'water' %}selected{% endif %}>Water Supply</option>
+            <option value="electricity" {% if category_filter == 'electricity' %}selected{% endif %}>Electricity</option>
+            <option value="other" {% if category_filter == 'other' %}selected{% endif %}>Other</option>
+        </select>
+
+        <div class="md:col-span-4 flex justify-end gap-3 mt-2">
+            <a href="{% url 'admin_reports' %}" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 transition">Clear Filters</a>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition shadow-md">
+                <i class="fas fa-filter mr-2"></i>Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Reports List -->
+<div class="space-y-4">
+    {% for report in reports %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow duration-200">
+        <div class="p-6 flex flex-col md:flex-row gap-6">
+            <!-- Image Thumbnail -->
+            <div class="flex-shrink-0">
+                {% if report.image %}
+                    <img src="{{ report.image.url }}" alt="Issue Image" class="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
+                {% else %}
+                    <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 border border-gray-200 dark:border-gray-600">
+                        <i class="fas fa-image text-3xl"></i>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-mono text-gray-500">#{{ report.id }}</span>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white truncate">{{ report.title }}</h3>
+                            {% if report.priority == 'urgent' %}
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded font-bold border border-red-200">URGENT</span>
+                            {% elif report.priority == 'high' %}
+                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded font-bold border border-orange-200">HIGH</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{{ report.description }}</p>
+                        
+                        <div class="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-red-500 mr-1.5"></i> {{ report.location }}
+                            </span>
+                            <span class="flex items-center">
+                                <i class="far fa-calendar-alt mr-1.5"></i> {{ report.created_at|date:"M d, Y" }}
+                            </span>
+                            <span class="flex items-center">
+                                <i class="far fa-user mr-1.5"></i> {{ report.created_by.get_full_name|default:report.created_by.username }}
+                            </span>
+                            {% if report.department %}
+                            <span class="flex items-center text-blue-600 dark:text-blue-400">
+                                <i class="fas fa-building mr-1.5"></i> {{ report.department.name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Status & Action -->
+                    <div class="flex flex-col items-end gap-3 min-w-[140px]">
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full border
+                            {% if report.status == 'resolved' %}bg-green-100 text-green-800 border-green-200
+                            {% elif report.status == 'in_progress' %}bg-blue-100 text-blue-800 border-blue-200
+                            {% elif report.status == 'verified' %}bg-purple-100 text-purple-800 border-purple-200
+                            {% else %}bg-gray-100 text-gray-800 border-gray-200{% endif %}">
+                            {{ report.get_status_display }}
+                        </span>
+                        
+                        <a href="{% url 'admin_report_detail' report.id %}" class="w-full text-center px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 transition">
+                            Manage Issue
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
+            <i class="fas fa-inbox text-2xl text-gray-400"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">No issues found</h3>
+        <p class="text-gray-500 mt-1">Try adjusting your search or filters.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if reports.has_other_pages %}
+<div class="mt-8 flex justify-center">
+    <nav class="flex items-center gap-2">
+        {% if reports.has_previous %}
+            <a href="?page={{ reports.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">Previous</a>
+        {% endif %}
+        
+        <span class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">{{ reports.number }}</span>
+        
+        {% if reports.has_next %}
+            <a href="?page={{ reports.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">Next</a>
+        {% endif %}
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

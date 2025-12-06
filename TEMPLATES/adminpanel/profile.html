@@ -1,0 +1,222 @@
+{% extends 'adminpanel/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "My Profile" %}{% endblock %}
+{% block page_title %}{% trans "Account Settings" %}{% endblock %}
+
+{% block content %}
+<!-- 1. Profile Header Card -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+    <!-- Gradient Cover -->
+    <div class="h-32 bg-gradient-to-r from-blue-600 to-indigo-700 relative">
+        <div class="absolute bottom-0 left-0 w-full h-full bg-black/10"></div>
+    </div>
+    
+    <div class="px-6 pb-6 relative">
+        <div class="flex flex-col md:flex-row items-end -mt-12 mb-4 gap-6">
+            <!-- Avatar with Initials -->
+            <div class="relative">
+                <div class="w-24 h-24 rounded-full bg-white dark:bg-gray-800 p-1 shadow-xl">
+                    <div class="w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center text-3xl font-bold text-blue-600 dark:text-blue-400 uppercase">
+                        {{ user.first_name|first|default:user.username|first }}
+                    </div>
+                </div>
+                <!-- Online Status Dot -->
+                <div class="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full" title="Active"></div>
+            </div>
+            
+            <!-- User Info -->
+            <div class="flex-1 text-center md:text-left">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    {{ user.get_full_name|default:user.username }}
+                </h2>
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center">
+                        <i class="fas fa-envelope w-4 mr-2 text-gray-400"></i> {{ user.email }}
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-id-badge w-4 mr-2 text-gray-400"></i> 
+                        <span class="capitalize bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-200">{{ profile.role }}</span>
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-map-marker-alt w-4 mr-2 text-red-500"></i> Indore, MP
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="flex gap-4 mt-4 md:mt-0">
+                <div class="text-center px-5 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                    <span class="block text-2xl font-bold text-blue-600 dark:text-blue-400">{{ issues_reported|default:"0" }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">Issues</span>
+                </div>
+                <div class="text-center px-5 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                    <span class="block text-2xl font-bold text-purple-600 dark:text-purple-400">{{ days_joined|default:"0" }}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold tracking-wider">Days</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- 2. Left Column: Personal Information Form -->
+    <div class="lg:col-span-2">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 h-full">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i class="far fa-user-circle mr-3 text-blue-500"></i> Personal Details
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <form method="POST" class="space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Username (Read Only) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-at text-gray-400"></i>
+                                </div>
+                                <input type="text" value="{{ user.username }}" disabled
+                                       class="w-full pl-10 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" name="email" value="{{ user.email }}"
+                                       class="w-full pl-10 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors">
+                            </div>
+                        </div>
+
+                        <!-- First Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label>
+                            <input type="text" name="first_name" value="{{ user.first_name }}"
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors">
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                            <input type="text" name="last_name" value="{{ user.last_name }}"
+                                   class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors">
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                </div>
+                                <input type="text" name="phone" value="{{ profile.phone }}" placeholder="+91 98765 43210"
+                                       class="w-full pl-10 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors">
+                            </div>
+                        </div>
+
+                        <!-- Role (Read Only) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
+                            <input type="text" value="{{ profile.get_role_display }}" disabled
+                                   class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed capitalize">
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Residential Address</label>
+                        <div class="relative">
+                            <div class="absolute top-3 left-3 flex items-center pointer-events-none">
+                                <i class="fas fa-home text-gray-400"></i>
+                            </div>
+                            <textarea name="address" rows="3" placeholder="Enter your full address in Indore..."
+                                      class="w-full pl-10 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors">{{ profile.address }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-colors shadow-md flex items-center">
+                            <i class="fas fa-save mr-2"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Right Column: Security & Status -->
+    <div class="lg:col-span-1 space-y-6">
+        
+        <!-- Password Change Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/10">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <i class="fas fa-lock mr-3 text-red-500"></i> Security
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
+                        <input type="password" name="old_password" required
+                               class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Password</label>
+                        <input type="password" name="new_password1" required
+                               class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
+                        <input type="password" name="new_password2" required
+                               class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center font-medium shadow-sm">
+                        <i class="fas fa-key mr-2 text-gray-400"></i> Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Status Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-4 tracking-wider">Account Overview</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center text-sm p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <span class="text-gray-600 dark:text-gray-300">Status</span>
+                    <span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200 flex items-center">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span> Active
+                    </span>
+                </div>
+                <div class="flex justify-between items-center text-sm p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <span class="text-gray-600 dark:text-gray-300">Last Login</span>
+                    <span class="text-gray-900 dark:text-white font-medium">{{ user.last_login|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <span class="text-gray-600 dark:text-gray-300">Date Joined</span>
+                    <span class="text-gray-900 dark:text-white font-medium">{{ user.date_joined|date:"M d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

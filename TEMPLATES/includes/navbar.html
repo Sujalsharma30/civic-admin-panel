@@ -1,0 +1,6 @@
+<header class="header">
+    <h1>{% block header_title %}Admin Panel{% endblock %}</h1>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span class="text-sm text-gray-500">Welcome, {{ user.username|default:"Admin" }}</span>
+    </div>
+</header>

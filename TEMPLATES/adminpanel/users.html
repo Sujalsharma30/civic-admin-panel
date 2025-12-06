@@ -1,0 +1,157 @@
+{% extends 'adminpanel/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Users" %}{% endblock %}
+{% block page_title %}{% trans "Users Management" %}{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+    <form method="GET" action="{% url 'admin_users' %}" class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1 relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i class="fas fa-search text-gray-400"></i>
+            </span>
+            <input type="text" name="search" value="{{ search }}" placeholder="Search by name, email or phone..." 
+                   class="w-full pl-10 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+        </div>
+        
+        <select name="role" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <option value="">All Roles</option>
+            <option value="citizen" {% if role_filter == 'citizen' %}selected{% endif %}>Citizen</option>
+            <option value="officer" {% if role_filter == 'officer' %}selected{% endif %}>Officer</option>
+            <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+        </select>
+        
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition shadow-md">
+            {% trans "Search" %}
+        </button>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {% trans "Registered Citizens" %} <span class="ml-2 text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded-full">{{ users.paginator.count }}</span>
+        </h3>
+        <a href="{% url 'export_users_csv' %}?{% if search %}search={{ search }}&{% endif %}{% if role_filter %}role={{ role_filter }}&{% endif %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm flex items-center shadow-sm">
+            <i class="fas fa-file-csv mr-2"></i>{% trans "Export List" %}
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-100 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Profile</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Address (Indore)</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                {% for user in users %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ user.get_full_name|default:user.username }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    Joined: {{ user.date_joined|date:"M d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 dark:text-white flex flex-col">
+                            <span><i class="far fa-envelope w-4 text-gray-400 mr-1"></i> {{ user.email }}</span>
+                            <span class="mt-1"><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> {{ user.profile.phone|default:"N/A" }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate" title="{{ user.profile.address }}">
+                            <i class="fas fa-map-marker-alt text-red-400 mr-1"></i>
+                            {{ user.profile.address|default:"Indore, MP" }}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full border 
+                            {% if user.profile.role == 'admin' %}bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800
+                            {% elif user.profile.role == 'officer' %}bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800
+                            {% else %}bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600{% endif %}">
+                            {{ user.profile.get_role_display|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if user.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span> Active
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span> Banned
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        {% if user != request.user %}
+                        <form method="POST" action="{% url 'admin_user_toggle_active' user.id %}" class="inline-block">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="p-2 rounded-lg transition-colors duration-200
+                                    {% if user.is_active %}
+                                        text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+                                    {% else %}
+                                        text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20
+                                    {% endif %}"
+                                    title="{% if user.is_active %}Deactivate User{% else %}Activate User{% endif %}">
+                                <i class="fas {% if user.is_active %}fa-ban{% else %}fa-check-circle{% endif %}"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-users-slash text-4xl mb-3 text-gray-300"></i>
+                        <p>No users found matching your criteria.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
+        <div class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
+            Showing <span class="font-medium">{{ users.start_index }}</span> to <span class="font-medium">{{ users.end_index }}</span> of <span class="font-medium">{{ users.paginator.count }}</span> users
+        </div>
+        <div class="flex gap-2">
+            {% if users.has_previous %}
+            <a href="?page={{ users.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-white dark:hover:bg-gray-700 transition text-sm">Previous</a>
+            {% endif %}
+            
+            <span class="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium">{{ users.number }}</span>
+            
+            {% if users.has_next %}
+            <a href="?page={{ users.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" 
+               class="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-white dark:hover:bg-gray-700 transition text-sm">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

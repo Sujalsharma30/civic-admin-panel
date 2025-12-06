@@ -1,0 +1,213 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" 
+      x-data="{ 
+          darkMode: localStorage.getItem('darkMode') ? localStorage.getItem('darkMode') === 'true' : (window.matchMedia('(prefers-color-scheme: dark)').matches),
+          sidebarOpen: window.innerWidth >= 1024,
+          notificationsOpen: false
+      }" 
+      :class="{ 'dark': darkMode }"
+      x-init="
+          // Initialize dark mode from localStorage or system preference
+          if (localStorage.getItem('darkMode') === null) {
+              darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              localStorage.setItem('darkMode', darkMode);
+          }
+          // Save dark mode preference
+          $watch('darkMode', value => localStorage.setItem('darkMode', value));
+      ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "Admin Dashboard" %}{% endblock %} - {% trans "Smart City" %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
+    
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0"
+         :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }"
+         x-init="
+            if (window.innerWidth < 1024) sidebarOpen = false;
+            window.addEventListener('resize', () => {
+                sidebarOpen = window.innerWidth >= 1024;
+            });
+         ">
+        
+        <!-- Logo -->
+        <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-city text-white text-lg"></i>
+                </div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">{% trans "Smart City" %}</span>
+            </div>
+            <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 dark:text-gray-400">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="mt-6 px-3 overflow-y-auto" style="height: calc(100vh - 200px);">
+            <a href="{% url 'admin_dashboard' %}" 
+               class="flex items-center px-4 py-3 mb-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400{% endif %}">
+                <i class="fas fa-home w-5 mr-3"></i>
+                <span>{% trans "Dashboard" %}</span>
+            </a>
+            
+            <a href="{% url 'admin_reports' %}" 
+               class="flex items-center px-4 py-3 mb-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition {% if 'report' in request.resolver_match.url_name %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400{% endif %}">
+                <i class="fas fa-file-alt w-5 mr-3"></i>
+                <span>{% trans "Reports" %}</span>
+                {% if unread_notifications and unread_notifications > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ unread_notifications }}</span>
+                {% endif %}
+            </a>
+            
+            <a href="{% url 'admin_users' %}" 
+               class="flex items-center px-4 py-3 mb-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition {% if request.resolver_match.url_name == 'admin_users' %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400{% endif %}">
+                <i class="fas fa-users w-5 mr-3"></i>
+                <span>{% trans "Users" %}</span>
+            </a>
+            
+            <a href="{% url 'admin_maps' %}" 
+               class="flex items-center px-4 py-3 mb-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition {% if request.resolver_match.url_name == 'admin_maps' %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400{% endif %}">
+                <i class="fas fa-map-marked-alt w-5 mr-3"></i>
+                <span>{% trans "Maps" %}</span>
+            </a>
+            
+            <a href="{% url 'admin_profile' %}" 
+               class="flex items-center px-4 py-3 mb-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition {% if request.resolver_match.url_name == 'admin_profile' %}bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400{% endif %}">
+                <i class="fas fa-user-circle w-5 mr-3"></i>
+                <span>{% trans "Profile" %}</span>
+            </a>
+        </nav>
+        
+        <!-- User Section -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div class="flex items-center space-x-3 mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{% trans "Admin" %}</p>
+                </div>
+            </div>
+            <a href="{% url 'admin_logout' %}" class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                <span>{% trans "Logout" %}</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="lg:ml-64">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between h-16 px-6">
+                <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{% block page_title %}Dashboard{% endblock %}</h1>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications Dropdown -->
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                        <button @click="open = !open" class="relative p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notifications and unread_notifications > 0 %}
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                            {% endif %}
+                        </button>
+                        <div x-show="open" x-cloak 
+                             class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="font-semibold text-gray-900 dark:text-white">{% trans "Notifications" %}</h3>
+                            </div>
+                            <div class="p-2">
+                                {% if unread_notifications and unread_notifications > 0 %}
+                                    {% for notification in request.user.notifications.filter|slice:":10" %}
+                                    <div class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg {% if not notification.is_read %}bg-blue-50 dark:bg-blue-900/20{% endif %}">
+                                        <p class="text-sm text-gray-900 dark:text-white font-medium">{{ notification.title }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ notification.message|truncatewords:15 }}</p>
+                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ notification.created_at|timesince }} {% trans "ago" %}</p>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 p-4 text-center">{% trans "No notifications" %}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Language Switcher -->
+                    <form action="{% url 'set_language' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                        <select name="language" onchange="this.form.submit()" 
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none">
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% get_available_languages as LANGUAGES %}
+                            {% for lang_code, lang_name in LANGUAGES %}
+                            <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                                {{ lang_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button @click="darkMode = !darkMode" 
+                            class="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition">
+                        <i class="fas fa-moon" x-show="!darkMode"></i>
+                        <i class="fas fa-sun" x-show="darkMode" x-cloak></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Messages -->
+        {% if messages %}
+        <div class="px-6 pt-4" x-data="{ show: true }" x-init="setTimeout(() => show = false, 3000)" x-show="show" x-transition>
+            {% for message in messages %}
+            <div class="mb-2 p-4 rounded-lg flex items-center justify-between {% if message.tags == 'error' %}bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200{% else %}bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200{% endif %}">
+                <span>{{ message }}</span>
+                <button @click="show = false" class="ml-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Page Content -->
+        <main class="p-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+

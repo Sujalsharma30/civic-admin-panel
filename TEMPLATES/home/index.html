@@ -1,0 +1,17 @@
+<div class="stats-grid">
+    <div class="stat-card">
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Total Reports</div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div style="color: var(--primary); font-size: 0.85rem; font-weight: 500;">↑ Live Data</div>
+    </div>
+    <div class="stat-card">
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Pending Resolution</div>
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div style="color: #f59e0b; font-size: 0.85rem; font-weight: 500;">Requires Attention</div>
+    </div>
+    <div class="stat-card">
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Resolved</div>
+        <div class="stat-value">{{ stats.resolved }}</div>
+        <div style="color: var(--text-muted); font-size: 0.85rem;">Archived</div>
+    </div>
+</div>

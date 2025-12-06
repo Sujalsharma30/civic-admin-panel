@@ -1,0 +1,130 @@
+{% extends 'adminpanel/base.html' %}
+{% load static %}
+
+{% block title %}Report #{{ report.id }}{% endblock %}
+{% block page_title %}Report #{{ report.id }}: {{ report.title }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Details -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Report Info Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Report Details</h3>
+            
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            {% for code, name in report.STATUS_CHOICES %}
+                            <option value="{{ code }}" {% if report.status == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                        <select name="priority" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            {% for code, name in report.PRIORITY_CHOICES %}
+                            <option value="{{ code }}" {% if report.priority == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assign To</label>
+                        <select name="assigned_to" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Unassigned</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if report.assigned_to == user %}selected{% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department</label>
+                        <select name="department" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Unassigned</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if report.department == dept %}selected{% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                    <i class="fas fa-save mr-2"></i>Update Report
+                </button>
+            </form>
+        </div>
+        
+        <!-- Description -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Description</h3>
+            <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ report.description }}</p>
+        </div>
+        
+        <!-- Location -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Location</h3>
+            <p class="text-gray-700 dark:text-gray-300">{{ report.location }}</p>
+            {% if report.latitude and report.longitude %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Coordinates: {{ report.latitude }}, {{ report.longitude }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Info Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Information</h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Category:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">{{ report.get_category_display }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Created:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">{{ report.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Updated:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">{{ report.updated_at|date:"M d, Y H:i" }}</span>
+                </div>
+                {% if report.created_by %}
+                <div>
+                    <span class="text-gray-500 dark:text-gray-400">Created By:</span>
+                    <span class="ml-2 text-gray-900 dark:text-white">{{ report.created_by.username }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Activity Timeline -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity Timeline</h3>
+            <div class="space-y-4">
+                {% for activity in activities %}
+                <div class="border-l-2 border-green-500 pl-4">
+                    <p class="text-sm text-gray-900 dark:text-white">{{ activity.action }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {{ activity.timestamp|date:"M d, Y H:i" }}
+                        {% if activity.user %} by {{ activity.user.username }}{% endif %}
+                    </p>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 dark:text-gray-400">No activities yet</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
